@@ -1,0 +1,130 @@
+doctype html
+html(lang="en")
+  head
+    title GeoMesh Sample
+    script(src=`https://maps.googleapis.com/maps/api/js?key=${api_key}`, type="text/javascript")
+    script(type='text/javascript').
+      document.addEventListener('DOMContentLoaded', evt => {
+        let center = {lat: 35.633406, lng: 139.715622};
+        [
+          [1, document.getElementById('basic-map-1'), center, 7],
+          [2, document.getElementById('basic-map-2'), center, 10],
+          [3, document.getElementById('basic-map-3'), center, 13],
+          [4, document.getElementById('basic-map-4'), center, 16],
+          ['custom', document.getElementById('basic-map-custom'), center, 14],
+          ['basepoint', document.getElementById('basic-map-basepoint'), center, 13],
+          ['fitline', document.getElementById('basic-map-fitline'), center, 15],
+          ['fitpolygon', document.getElementById('basic-map-fitpolygon'), center, 15],
+        ].forEach(args => createBasicMap.apply(null, args))
+      });
+
+      function createBasicMap(type, mapCanvas, center, zoom) {
+        let map, mesh, allData = JSON.parse(mapCanvas.dataset.mesh), data = allData[String(type)];
+        map = new google.maps.Map(mapCanvas, {
+          zoom: zoom,
+          center: center,
+          gestureHandling: 'greedy',
+          styles: [{stylers:[{gamma: .8}, {saturation: -60}, {lightness: 20}]}]
+        });
+        data.mesh.map(paths => {
+          new google.maps.Polygon({
+            paths: paths,
+            fillColor: '#ed6103',
+            strokeWeight: 0.1,
+            map: map
+          });
+        });
+
+        if (data.line) {
+          new google.maps.Polyline({
+            path: data.line,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1,
+            strokeWeight: 2,
+            map: map
+          });
+        } else {
+          new google.maps.Marker({
+            position: center,
+            map: map
+          })
+        }
+      }
+    style(type='text/css').
+      .map {
+        width: 100%;
+        height: 400px;
+        border-radius: 4px;
+        border: 3px solid #333;
+      }
+      .map + pre {
+        background: #dedede;
+        padding: 20px;
+      }
+      .container {
+        padding: 20px 60px;
+      }
+  body
+    .container
+      h1 Geo mesh example
+      each type in  [1, 2, 3, 4]
+        div(id=`mesh-type-${type}`)
+          h2 MeshType: #{type}
+          .map(id=`basic-map-${type}`, data-mesh=mesh)
+          pre
+            | let center = {lat: 35.633406, lng: 139.715622};
+            | let mesh = new GeoMesh(#{type})
+            |   , tileOffset = mesh.getMeshOffsetFromFitPoint(center.lat, center.lng)
+            |   ;
+            | return mesh.getRectCoordinatesFromMeshOffset(tileOffset.x, tileOffset.y)
+      #mesh-type-custom
+        h2 MeshType: custom
+        p "custom" can adjust the interval between latitude and longitude.
+        .map(id=`basic-map-custom`, data-mesh=mesh)
+        pre
+          | let center = {lat: 35.633406, lng: 139.715622};
+          | let mesh = new GeoMesh('custom', null, {x: 30 / 60 / 60, y: 40 / 60 / 60})
+          |   , tileOffset = mesh.getMeshOffsetFromFitPoint(center.lat, center.lng)
+          |   ;
+          | return mesh.getRectCoordinatesFromMeshOffset(tileOffset.x, tileOffset.y)
+      #mesh-type-basepoint
+        h2 MeshType: 3 and Modify base point
+        p With BasePoint you can adjust the starting point of the tile plane. default is {lat: 0, lng: 100}
+        .map(id=`basic-map-basepoint`, data-mesh=mesh)
+        pre
+          | let center = {lat: 35.633406, lng: 139.715622};
+          | let mesh = new GeoMesh(3, {lat: 1, lng: 120})
+          |   , tileOffset = mesh.getMeshOffsetFromFitPoint(center.lat, center.lng)
+          |   ;
+          | return mesh.getRectCoordinatesFromMeshOffset(tileOffset.x, tileOffset.y)
+      #mesh-type-fitline
+        h2 MeshType: 4 and fit line
+        .map(id=`basic-map-fitline`, data-mesh=mesh)
+        pre
+          | let line = [
+          |   [35.63581374810408, 139.71287727355957],
+          |   [35.635726550864504, 139.71658945083618],
+          |   [35.63199441984387, 139.71680402755737],
+          |   [35.63080847256858, 139.71513032913208],
+          |   [35.63326754954175, 139.70397233963013]
+          | ];
+          | let mesh = new GeoMesh(4)
+          |   , tileOffsets = mesh.getMeshOffsetsFromFitLine(line)
+          |   ;
+          | return tileOffsets.map(tileOffset => mesh.getRectCoordinatesFromMeshOffset(tileOffset.x, tileOffset.y))
+      #mesh-type-fitpolygon
+        h2 MeshType: 4 and fit polygon
+        .map(id=`basic-map-fitpolygon`, data-mesh=mesh)
+        pre
+          | let line = [
+          |   [35.63581374810408, 139.71287727355957],
+          |   [35.635726550864504, 139.71658945083618],
+          |   [35.63199441984387, 139.71680402755737],
+          |   [35.63080847256858, 139.71513032913208],
+          |   [35.63326754954175, 139.70397233963013],
+          |   [35.63581374810408, 139.71287727355957]
+          | ];
+          | let mesh = new GeoMesh(4)
+          |   , tileOffsets = mesh.getMeshOffsetsFromFitPolygon(line)
+          |   ;
+          | return tileOffsets.map(tileOffset => mesh.getRectCoordinatesFromMeshOffset(tileOffset.x, tileOffset.y))
