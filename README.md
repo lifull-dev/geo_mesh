@@ -86,3 +86,13 @@ run below. then open `http://localhost:3333`
 export GEOMESH_GOOGLE_APIKEY=${google maps api key}
 npm run example
 ```
+
+## Use in browser
+
+execute the following command
+
+```sh
+npm run build
+```
+
+After that, read the file in the `dist/` directory from html
